@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thesis Omni | Ultimate Thesis Tracker</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: {
+                            400: '#FACC15',
+                            500: '#EAB308',
+                        },
+                        rose: {
+                            900: '#4c0519', // Deep base
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* --- PREMIUM STYLING --- */
+        body {
+            /* Golden Hour Gradient: Hangat, Premium, Menenangkan */
+            background: linear-gradient(120deg, #2a0a18 0%, #4a192c 40%, #7c2d3e 100%);
+            background-attachment: fixed;
+            color: #fff0f5; /* Rose White text */
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Panel V2 (Lebih Halus) */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-input:focus {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: #fb7185; /* Rose color */
+            outline: none;
+            box-shadow: 0 0 15px rgba(251, 113, 133, 0.2);
+        }
+
+        /* Progress Bar Custom */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            margin-top: -6px; 
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+
+        /* Scrollbar Halus */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+        /* --- FIX ICON INVISIBLE --- */
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1) brightness(1.2); /* Membuat icon putih & terang */
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+        /* Animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+    </style>
+</head>
+<body class="p-4 md:p-8 font-sans selection:bg-rose-500 selection:text-white">
+
+   <nav class="relative flex flex-wrap md:flex-nowrap justify-between items-center max-w-7xl mx-auto mb-8 animate-fade-in py-2 gap-y-3">
+        
+        <div class="flex items-center gap-3 z-20">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-rose-400 to-orange-400 flex items-center justify-center shadow-lg shadow-rose-500/20">
+                <i class="fa-solid fa-graduation-cap text-white"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-rose-200 to-orange-200">Thesis Omni</h1>
+        </div>
+
+        <div class="flex gap-4 z-20">
+            <button onclick="resetData()" class="text-xs text-rose-300 hover:text-white transition-colors">Reset Data</button>
+            <div class="glass-panel px-4 py-1.5 rounded-full flex items-center gap-2 text-sm text-rose-100">
+                <i class="fa-regular fa-clock"></i> <span id="clock">00:00</span>
+            </div>
+        </div>
+
+        <div class="w-full md:w-auto order-last md:order-none md:absolute md:left-1/2 md:top-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2 text-center pointer-events-none mt-2 md:mt-0">
+            <p id="quoteDisplay" class="text-xs md:text-sm font-medium text-rose-100/80 italic tracking-wide drop-shadow-md transition-all duration-700">
+                "Memuat motivasi..."
+            </p>
+        </div>
+    </nav>
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <div class="lg:col-span-4 space-y-6">
+            
+        <div class="glass-panel rounded-3xl p-6 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-rose-500/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                
+                <div class="flex justify-between items-start mb-4 relative z-10">
+                    <div>
+                        <h2 class="text-lg font-bold text-white">Deadline Sidang</h2>
+                        <p class="text-xs text-rose-200/70">Waktu tersisa menuju kelulusan</p>
+                    </div>
+                    <button onclick="openDeadlineModal()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all cursor-pointer border border-white/10 hover:border-white/30">
+                        <i class="fa-solid fa-pen text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-4 gap-2 text-center mb-4 relative z-10">
+                    <div class="glass-panel p-2 rounded-xl bg-black/20">
+                        <span id="cd-days" class="block text-2xl font-bold text-rose-400 font-mono">00</span>
+                        <span class="text-[10px] uppercase text-gray-400">Hari</span>
+                    </div>
+                    <div class="glass-panel p-2 rounded-xl bg-black/20">
+                        <span id="cd-hours" class="block text-2xl font-bold text-rose-400 font-mono">00</span>
+                        <span class="text-[10px] uppercase text-gray-400">Jam</span>
+                    </div>
+                    <div class="glass-panel p-2 rounded-xl bg-black/20">
+                        <span id="cd-mins" class="block text-2xl font-bold text-rose-400 font-mono">00</span>
+                        <span class="text-[10px] uppercase text-gray-400">Mnt</span>
+                    </div>
+                    <div class="glass-panel p-2 rounded-xl bg-black/20">
+                        <span id="cd-secs" class="block text-2xl font-bold text-rose-400 font-mono">00</span>
+                        <span class="text-[10px] uppercase text-gray-400">Dtk</span>
+                    </div>
+                </div>
+                
+                <div id="targetDateDisplay" class="text-center text-sm text-rose-200/50 bg-black/10 py-1 rounded-lg relative z-10">
+                    Target: Belum diatur
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-6 flex flex-col items-center justify-center relative">
+                <h3 class="absolute top-6 left-6 text-sm font-semibold text-gray-300">Total Progress</h3>
+                <div class="w-40 h-40 mt-4 relative">
+                    <canvas id="progressChart"></canvas>
+                    <div class="absolute inset-0 flex items-center justify-center flex-col">
+                        <span id="totalPercent" class="text-3xl font-bold text-white">0%</span>
+                        <span class="text-[10px] text-gray-400">Completed</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-6">
+                <h3 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-book-bookmark mr-2 text-rose-400"></i>Referensi Jurnal</h3>
+                <form id="refForm" class="space-y-3">
+                    <input type="text" id="refTitle" placeholder="Judul Jurnal / Artikel" class="glass-input w-full px-4 py-2 rounded-xl text-sm" required>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" id="refAuthor" placeholder="Penulis (ex: Smith, J.)" class="glass-input w-full px-4 py-2 rounded-xl text-sm" required>
+                        <input type="number" id="refYear" placeholder="Tahun" class="glass-input w-full px-4 py-2 rounded-xl text-sm" required>
+                    </div>
+                    <input type="url" id="refLink" placeholder="Link DOI / PDF" class="glass-input w-full px-4 py-2 rounded-xl text-sm">
+                    <button type="submit" class="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white py-2 rounded-xl shadow-lg shadow-rose-900/40 text-sm font-medium transition-all">
+                        Simpan Referensi
+                    </button>
+                </form>
+
+                <div class="mt-6">
+                    <h4 class="text-xs font-semibold text-gray-400 uppercase mb-2">Saved Refs</h4>
+                    <div id="refList" class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="text-3xl font-bold text-white">Target Bab</h2>
+                    <p class="text-rose-200/60">Pecah skripsimu menjadi bagian kecil.</p>
+                </div>
+                <button onclick="openChapterModal()" class="bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-xl border border-white/10 backdrop-blur-md transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Tambah Bab
+                </button>
+            </div>
+
+            <div id="chapterContainer" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                </div>
+            
+            <div id="emptyState" class="hidden flex-col items-center justify-center py-20 opacity-50">
+                <i class="fa-regular fa-file-lines text-5xl mb-4"></i>
+                <p>Belum ada target bab.</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="deadlineModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-sm transform scale-95 transition-all">
+            <h3 class="text-xl font-bold mb-4">Atur Jadwal Sidang</h3>
+            <label class="text-xs text-gray-400 mb-1 block">Tanggal & Waktu Sidang/Deadline</label>
+            <input type="datetime-local" id="deadlineInput" class="glass-input w-full px-4 py-2 rounded-xl mb-4 text-white">
+            <div class="flex justify-end gap-2">
+                <button onclick="document.getElementById('deadlineModal').classList.add('hidden')" class="px-4 py-2 text-gray-400 hover:text-white">Batal</button>
+                <button onclick="saveDeadline()" class="bg-rose-600 px-6 py-2 rounded-xl text-white">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chapterModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div class="glass-panel p-8 rounded-2xl w-full max-w-md transform scale-95 transition-all">
+            <h3 class="text-xl font-bold mb-4">Tambah Target Bab</h3>
+            <form id="chapterForm" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">Nama Bab / Sub-Bab</label>
+                    <input type="text" id="chapTitle" class="glass-input w-full px-4 py-2 rounded-xl" placeholder="Contoh: Bab 2 - Landasan Teori" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">Catatan / Target Spesifik</label>
+                    <textarea id="chapNote" class="glass-input w-full px-4 py-2 rounded-xl" placeholder="Minimal 10 halaman, cari 5 jurnal..."></textarea>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">Link Dokumen (Google Docs/Drive)</label>
+                    <input type="url" id="chapLink" class="glass-input w-full px-4 py-2 rounded-xl" placeholder="https://...">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">Target Selesai</label>
+                    <input type="date" id="chapDate" class="glass-input w-full px-4 py-2 rounded-xl" required>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('chapterModal').classList.add('hidden')" class="px-4 py-2 text-gray-400 hover:text-white">Batal</button>
+                    <button type="submit" class="bg-rose-600 px-6 py-2 rounded-xl text-white shadow-lg shadow-rose-600/30">Tambah</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /* --- JAVASCRIPT LOGIC --- */
+        /* --- FITUR MOTIVASI AUTO-UPDATE --- */
+        const quotes = [
+            "Revisi adalah tanda cinta Dosen Pembimbing agar kamu lebih hebat.",
+            "Skripsi yang baik adalah skripsi yang selesai, bukan yang sempurna.",
+            "Satu paragraf hari ini lebih baik daripada nol halaman.",
+            "Ingat, toga sudah menunggu. Jangan menyerah sekarang!",
+            "Rasa sakit disiplin jauh lebih ringan daripada rasa sakit penyesalan.",
+            "Fokus pada progres, sekecil apapun itu.",
+            "Tulis dulu, edit kemudian. Jangan jadi editor bagi tulisan yang belum ada.",
+            "Jatah gagalmu sudah habis, sekarang saatnya sukses.",
+            "Ingat alasan kenapa kamu memulai kuliah ini.",
+            "Setiap ketikan keyboard membawamu lebih dekat ke wisuda.",
+            "Lelah itu wajar, berhenti itu jangan. Istirahatlah sejenak.",
+            "Masa depanmu ditentukan oleh apa yang kamu kerjakan hari ini."
+        ];
+
+        const updateQuote = () => {
+            // Ambil jam saat ini (0-23)
+            const currentHour = new Date().getHours();
+            
+            // Pilih quote berdasarkan jam (gunakan modulus agar berulang jika jam > jumlah quote)
+            // Ini memastikan quote sama selama jam 10.00-10.59, dan berubah pas jam 11.00
+            const index = currentHour % quotes.length;
+            
+            const quoteElement = document.getElementById('quoteDisplay');
+            
+            // Efek transisi halus saat ganti teks
+            quoteElement.style.opacity = 0;
+            setTimeout(() => {
+                quoteElement.innerText = `"${quotes[index]}"`;
+                quoteElement.style.opacity = 1;
+            }, 500);
+        };
+
+        // Jalankan saat pertama kali load
+        updateQuote();
+
+        // Cek setiap menit, apakah jam sudah berganti?
+        setInterval(updateQuote, 60000);
+
+        // State Management
+        let appData = JSON.parse(localStorage.getItem('thesisOmniData')) || {
+            deadline: null,
+            chapters: [], // { id, title, note, targetDate, progress (0-100) }
+            refs: []      // { id, title, author, year, link }
+        };
+
+        const saveApp = () => {
+            localStorage.setItem('thesisOmniData', JSON.stringify(appData));
+            updateCharts();
+        };
+
+        // --- 1. COUNTDOWN SYSTEM ---
+        const updateCountdown = () => {
+            const now = new Date().getTime();
+            const nowObj = new Date();
+            // Clock
+            document.getElementById('clock').innerText = nowObj.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+
+            if (!appData.deadline) {
+                document.getElementById('targetDateDisplay').innerText = "Belum ada target.";
+                return;
+            }
+
+            const target = new Date(appData.deadline).getTime();
+            const distance = target - now;
+
+            if (distance < 0) {
+                document.getElementById('targetDateDisplay').innerText = "WAKTU HABIS / SUDAH LULUS!";
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('cd-days').innerText = days;
+            document.getElementById('cd-hours').innerText = hours;
+            document.getElementById('cd-mins').innerText = minutes;
+            document.getElementById('cd-secs').innerText = seconds;
+            
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('targetDateDisplay').innerText = "Target: " + new Date(appData.deadline).toLocaleDateString('id-ID', options);
+        };
+
+        const openDeadlineModal = () => {
+            document.getElementById('deadlineModal').classList.remove('hidden');
+            if(appData.deadline) document.getElementById('deadlineInput').value = appData.deadline;
+        };
+
+        const saveDeadline = () => {
+            const val = document.getElementById('deadlineInput').value;
+            if (val) {
+                appData.deadline = val;
+                saveApp();
+                updateCountdown();
+                document.getElementById('deadlineModal').classList.add('hidden');
+                Swal.fire({ icon: 'success', title: 'Target Disimpan', text: 'Semangat mengejar deadline!', background: '#2a0a18', color: '#fff', timer: 1500, showConfirmButton: false });
+            }
+        };
+
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        // --- 2. CHAPTER & PROGRESS SYSTEM ---
+// --- 2. CHAPTER & PROGRESS SYSTEM (REVISI LINK) ---
+        const renderChapters = () => {
+            const container = document.getElementById('chapterContainer');
+            container.innerHTML = '';
+
+            if (appData.chapters.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('emptyState').classList.add('flex');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('emptyState').classList.remove('flex');
+            }
+
+            appData.chapters.forEach(chap => {
+                let statusColor = 'border-white/10';
+                let statusText = 'Mulai Mengerjakan';
+                
+                if (chap.progress == 100) {
+                    statusColor = 'border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.2)]';
+                    statusText = 'Selesai ✨';
+                } else if (chap.progress > 0) {
+                    statusColor = 'border-orange-400/50';
+                    statusText = 'Sedang Proses';
+                }
+
+                const card = document.createElement('div');
+                card.className = `glass-panel rounded-2xl p-6 transition-all border ${statusColor} hover:translate-y-[-4px]`;
+                
+                // Cek apakah ada link, jika ada siapkan tombolnya
+                const linkButton = chap.link 
+                    ? `<a href="${chap.link}" target="_blank" class="text-xs text-rose-300 hover:text-white flex items-center gap-1 transition-colors bg-white/5 px-2 py-1 rounded-lg border border-white/5 hover:bg-white/10">
+                         <i class="fa-solid fa-link"></i> Buka Doc
+                       </a>` 
+                    : '';
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold text-lg text-white leading-tight w-3/4">${chap.title}</h4>
+                        <button onclick="deleteChapter('${chap.id}')" class="text-gray-500 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-4 line-clamp-2">${chap.note}</p>
+                    
+                    <div class="flex items-center justify-between text-xs text-gray-300 mb-1">
+                        <span>${statusText}</span>
+                        <span class="font-mono">${chap.progress}%</span>
+                    </div>
+                    
+                    <div class="relative w-full h-2 bg-black/20 rounded-full mb-4 overflow-hidden">
+                        <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-400 to-rose-500 transition-all duration-500" style="width: ${chap.progress}%"></div>
+                    </div>
+
+                    <input type="range" min="0" max="100" value="${chap.progress}" 
+                        oninput="updateProgress('${chap.id}', this.value)" 
+                        class="w-full mb-3">
+
+                    <div class="flex justify-between items-center pt-3 border-t border-white/5 mt-1">
+                        <div class="text-xs text-gray-400 flex items-center gap-1">
+                            <i class="fa-regular fa-calendar"></i> ${chap.targetDate}
+                        </div>
+                        ${linkButton}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        const openChapterModal = () => document.getElementById('chapterModal').classList.remove('hidden');
+
+        document.getElementById('chapterForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newChap = {
+                id: Date.now().toString(),
+                title: document.getElementById('chapTitle').value,
+                note: document.getElementById('chapNote').value,
+                targetDate: document.getElementById('chapDate').value,
+                link: document.getElementById('chapLink').value, // Menangkap data link baru
+                progress: 0
+            };
+            appData.chapters.push(newChap);
+            saveApp();
+            renderChapters();
+            document.getElementById('chapterForm').reset();
+            document.getElementById('chapterModal').classList.add('hidden');
+        });
+        const updateProgress = (id, val) => {
+            const idx = appData.chapters.findIndex(c => c.id === id);
+            if (idx !== -1) {
+                appData.chapters[idx].progress = val;
+                // Update UI text instantly (optional optimization)
+                saveApp();
+                renderChapters(); // Re-render to update status text colors
+            }
+        };
+
+        const deleteChapter = (id) => {
+            Swal.fire({
+                title: 'Hapus Bab?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                confirmButtonText: 'Ya',
+                background: '#2a0a18', color: '#fff'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    appData.chapters = appData.chapters.filter(c => c.id !== id);
+                    saveApp();
+                    renderChapters();
+                }
+            })
+        };
+
+        // --- 3. REFERENCE MANAGER ---
+        const renderRefs = () => {
+            const list = document.getElementById('refList');
+            list.innerHTML = '';
+            appData.refs.forEach(ref => {
+                const item = document.createElement('div');
+                item.className = 'bg-white/5 p-3 rounded-xl border border-white/5 group hover:bg-white/10 transition-colors flex justify-between items-start';
+                item.innerHTML = `
+                    <div class="w-full">
+                        <div class="text-xs text-rose-300 font-bold mb-0.5">${ref.author} (${ref.year})</div>
+                        <div class="text-sm text-white font-medium leading-snug mb-2">${ref.title}</div>
+                        <div class="flex gap-2">
+                            ${ref.link ? `<a href="${ref.link}" target="_blank" class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded hover:bg-blue-500/40">Open Link</a>` : ''}
+                            <button onclick="copyCitation('${ref.id}')" class="text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded hover:bg-white/20">
+                                <i class="fa-regular fa-copy"></i> Copy Citation
+                            </button>
+                        </div>
+                    </div>
+                    <button onclick="deleteRef('${ref.id}')" class="text-gray-600 hover:text-red-400 ml-2"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                list.appendChild(item);
+            });
+        };
+
+        document.getElementById('refForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newRef = {
+                id: Date.now().toString(),
+                title: document.getElementById('refTitle').value,
+                author: document.getElementById('refAuthor').value,
+                year: document.getElementById('refYear').value,
+                link: document.getElementById('refLink').value
+            };
+            appData.refs.unshift(newRef); // Add to top
+            saveApp();
+            renderRefs();
+            document.getElementById('refForm').reset();
+        });
+
+        const deleteRef = (id) => {
+            appData.refs = appData.refs.filter(r => r.id !== id);
+            saveApp();
+            renderRefs();
+        };
+
+        const copyCitation = (id) => {
+            const ref = appData.refs.find(r => r.id === id);
+            // Format APA Simple: Author (Year). Title.
+            const text = `${ref.author} (${ref.year}). ${ref.title}.`;
+            navigator.clipboard.writeText(text);
+            const Toast = Swal.mixin({
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 2000,
+                background: '#FACC15', color: '#000'
+            });
+            Toast.fire({ icon: 'success', title: 'Sitasi Disalin!' });
+        };
+
+        // --- 4. CHARTS & INIT ---
+        let chartInstance = null;
+        const updateCharts = () => {
+            // Calculate Total Progress
+            const totalItems = appData.chapters.length;
+            let totalScore = 0;
+            appData.chapters.forEach(c => totalScore += parseInt(c.progress));
+            const avg = totalItems === 0 ? 0 : Math.round(totalScore / totalItems);
+
+            document.getElementById('totalPercent').innerText = `${avg}%`;
+
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Selesai', 'Sisa'],
+                    datasets: [{
+                        data: [avg, 100 - avg],
+                        backgroundColor: ['#fb7185', 'rgba(0,0,0,0.2)'], // Rose & Transparent Black
+                        borderWidth: 0,
+                        cutout: '85%',
+                        borderRadius: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    animation: { animateScale: true, animateRotate: true }
+                }
+            });
+        };
+
+        const resetData = () => {
+            Swal.fire({
+                title: 'Reset Semua?',
+                text: "Semua data skripsi akan dihapus.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                background: '#2a0a18', color: '#fff'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    localStorage.removeItem('thesisOmniData');
+                    location.reload();
+                }
+            });
+        };
+
+        // Initial Runs
+        renderChapters();
+        renderRefs();
+        updateCharts();
+
+    </script>
+</body>
+</html>
